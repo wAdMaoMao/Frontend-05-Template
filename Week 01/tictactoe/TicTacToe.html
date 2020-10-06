@@ -1,0 +1,189 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: voanit
+ * @Date: 2020-09-30 13:06:38
+ * @LastEditors: voanit
+ * @LastEditTime: 2020-10-04 16:05:43
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TicTacToe</title>
+  <style>
+    .bread-item{
+      width: 100px;
+      height: 100px;
+      border: 1px solid #fff;
+      background: rgb(68, 255, 208);
+      text-align: center;
+      display: inline-block;
+      vertical-align: middle;
+      cursor: pointer;
+      line-height: 100px;
+      font-size: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div id="bread"></div>
+</body>
+</html>
+
+<script type="text/javascript" charset="utf-8">
+
+// 定义一个二维数组代表棋盘内落位状态 0-空 1-⭕️ 2-❌
+let stateList = [
+  0,0,2,
+  0,1,0,
+  0,0,0
+]
+
+//全局变量记录棋手
+let whoCheck = 2
+
+function show() {
+  // 预先画出棋盘
+  let bread = document.getElementById('bread')
+  bread.innerHTML = ''
+  for(let i = 0; i < 3; i++) {
+    for(let j = 0; j < 3; j++){
+      let item = document.createElement('div')
+      item.classList.add('bread-item')
+      item.innerHTML = stateList[i*3+j] === 1 ? '⭕️' : stateList[i*3+j] === 2 ? '❌' : ''
+      bread.appendChild(item)
+      item.addEventListener('click', ()=>handelClick(i,j), false)
+    }
+    bread.appendChild(document.createElement('br'))
+  }
+}
+// click回调
+function handelClick(i,j) {
+  if(stateList[i*3+j] === 0){
+    stateList[i*3+j] = whoCheck
+    if(judgeWin(stateList,whoCheck)){
+      whoCheck === 1 ? console.log('⭕️is winner!') : console.log('❌ is winner!') 
+    }
+    whoCheck = 3 - whoCheck
+    show()
+    // 预判获胜者
+    if(willWin(stateList,whoCheck)){
+      whoCheck === 1 ? console.log('⭕️ will win!') : console.log('❌ will win!') 
+    }
+    computerCheck()
+  }
+}
+// 自动下棋功能
+function computerCheck() {
+  let choice = bestChoice(stateList,whoCheck)
+  if(choice && choice.result >= 0 && choice.point){
+    stateList[choice.point[1]*3+choice.point[0]] = whoCheck
+    if(judgeWin(stateList,whoCheck)){
+      whoCheck === 1 ? console.log('⭕️is winner!') : console.log('❌ is winner!') 
+    }
+    whoCheck = 3 - whoCheck
+    show()
+    // 预判获胜者
+    if(willWin(stateList,whoCheck)){
+      whoCheck === 1 ? console.log('⭕️ will win!') : console.log('❌ will win!') 
+    }
+  }
+}
+//暴力深拷贝
+function cloneDeep(data) {
+  return Object.create(data)
+}
+// 判断输赢
+function judgeWin(stateList,whoCheck) {
+  // 横行赢
+  for(let i = 0; i < 3; i++){
+    let win = true
+    for(let j = 0; j < 3; j++) {
+       if(stateList[i*3+j] !== whoCheck) {
+        win = false
+       }
+    }
+    if(win) return true
+  }
+  // 纵行赢
+  for(let i = 0; i < 3; i++) {
+    let win = true
+    for(let j = 0; j < 3; j++) {
+      if(stateList[j*3+i] !== whoCheck) {
+        win = false
+       }
+    }
+    if(win) return true
+  }
+  // 对角赢
+  {
+    let win = true
+    for(let i = 0; i< 3; i++) {
+      if(stateList[4*i] !== whoCheck) {
+        win = false
+       }
+    }
+    if(win) return true
+  }
+  // 对角赢
+  {
+    let win = true
+    for(let i = 0; i< 3; i++) {
+      if(stateList[2*i+2] !== whoCheck) {
+        win = false
+       }
+    }
+    if(win) return true
+  }
+  return false
+}
+
+// 预判获胜者
+function willWin(stateList,whoCheck) {
+  for(let i = 0; i < 3; i++){
+    for(let j = 0; j < 3; j++){
+       if(stateList[i*3+j]) continue
+       let copyList = cloneDeep(stateList)
+        copyList[i*3+j] = whoCheck
+        if(judgeWin(copyList,whoCheck)) return [j,i]
+    }
+  }
+  return null
+}
+
+// 递归寻求最优落点
+function bestChoice(stateList,whoCheck) {
+  let point
+  if(point = willWin(stateList,whoCheck)){
+    return {
+      point,
+      result: 1
+    }
+  }
+  let result = -2
+  outer:for(let i = 0; i < 3; i++) {
+    for(let j = 0; j < 3; j++){
+      if(stateList[i*3+j]) continue
+      let copyList = cloneDeep(stateList)
+      copyList[i*3+j] = whoCheck
+      let ret = bestChoice(copyList, 3 - whoCheck).result
+      if(-ret > result){
+        result = -ret
+        point = [j,i]
+      }
+      if(result === 1){
+        break outer
+      }
+    }
+  }
+  return {
+    point,
+    result: point ? result : 0
+  }
+}
+console.log(bestChoice(stateList,whoCheck))
+show()
+
+</script>
