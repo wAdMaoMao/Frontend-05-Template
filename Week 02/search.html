@@ -1,0 +1,163 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: voanit
+ * @Date: 2020-10-07 17:20:27
+ * @LastEditors: voanit
+ * @LastEditTime: 2020-10-10 10:35:47
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>map editor</title>
+  <style>
+    .cell{
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-bottom: 1px solid white;
+      border-right: 1px solid white;
+      background: #dcdcdc;
+      line-height: 6px;
+      vertical-align: middle;
+    }
+    #container{
+      width: 701px;
+      line-height: 0px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <button onclick="localStorage['map'] = JSON.stringify(map)">保存</button>
+</body>
+</html>
+<script type="text/javascript" charset="utf-8">
+
+//排序类
+class Sorted {
+  constructor(data,compare){
+    this.data = data.slice()
+    this.compare = compare || ((a,b)=>a-b)
+  }
+
+  take(){
+    let minElement = this.data[0]
+    let minIndex = 0
+    let length = this.data.length
+    for(let i = 1; i < length; i++){
+      if(this.compare(this.data[i],minElement) < 0){
+        minElement = this.data[i]
+        minIndex = i
+      }
+    }
+    this.data[minIndex] = this.data[length - 1]
+    this.data.pop()
+    return minElement
+  }
+
+  give(item){
+    this.data.push(item)
+  }
+
+  get length(){
+    return this.data.length
+  }
+}
+
+let map = localStorage.getItem('map') ? JSON.parse(localStorage.getItem('map')) : Array(10000).fill(0)
+let container = document.getElementById('container')
+
+for(let i = 0; i < 100; i++) {
+  for(let j = 0; j < 100; j++) {
+    let cell = document.createElement('div')
+    cell.classList.add('cell')
+    if(map[100*i+j]===1){
+      cell.style.backgroundColor = 'black'
+    }
+    cell.addEventListener('mousemove',()=>{
+      if(mouseDown){
+        if(clear){
+          cell.style.backgroundColor = ''
+          map[100*i+j] = 0
+        }else{
+          cell.style.backgroundColor = 'black'
+          map[100*i+j] = 1
+        }
+      }
+    },false)
+    container.appendChild(cell)
+  }
+}
+
+let mouseDown = false
+let clear = false
+document.addEventListener('mousedown',(e)=>{
+  mouseDown = true
+  clear = (e.which === 3)
+  
+},false)
+document.addEventListener('mouseup',()=>mouseDown = false, false)
+
+document.addEventListener('contextmenu',(e)=>e.preventDefault(),false)
+
+function sleep(t) {
+  return new Promise((resolve,reject)=>{
+    setTimeout(() => {
+      resolve()
+    }, t)
+  })
+}
+
+/**
+* @msg: 广度优先搜索
+* @param {Array} map 地图坐标list
+* @param {Array} start 起始点坐标
+* @param {Array} end 终点坐标
+* @return {Boolean} 是否找到路径
+*/
+async function findPath(map,start,end) {
+  let table = Object.create(map)
+  let queue = new Sorted([start],(a,b)=>distance(a)-distance(b))
+
+  async function insert(x, y, pre) {
+    if(x >= 100 || x < 0 || y < 0 || y >= 100) return
+    if(table[y * 100 + x]) return
+    container.children[y * 100 + x].style.backgroundColor = 'lightgreen'
+    table[y * 100 + x] = pre
+    queue.give([x, y])
+  }
+
+  function distance(point) {
+    return ((point[0]-end[0]) ** 2 + (point[1]-end[1]) ** 2)
+  }
+
+  while (queue.length > 0) {
+    let [x, y] = queue.take();
+    if(x === end[0] && y === end[1]){
+      let path = [];
+      while (x != start[0] || y != start[1]) {
+        //因为 ASI 的机制 要写分号
+        path.push(table[y * 100 + x]);
+        [x,y] = table[y * 100 + x];
+        await sleep(1);
+        container.children[y * 100 + x].style.backgroundColor = 'purple';
+      }
+      return path
+    }
+    await insert(x - 1, y, [x, y])
+    await insert(x, y - 1, [x, y])
+    await insert(x + 1, y, [x, y])
+    await insert(x, y + 1, [x, y])
+    // 斜向
+    await insert(x - 1, y - 1, [x, y])
+    await insert(x + 1, y - 1, [x, y])
+    await insert(x - 1, y + 1, [x, y])
+    await insert(x + 1, y + 1, [x, y])
+  }
+  return null
+}
+// findPath(map,[0,0],[50,50])
+</script>

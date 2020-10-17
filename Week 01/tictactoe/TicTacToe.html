@@ -4,7 +4,7 @@
  * @Author: voanit
  * @Date: 2020-09-30 13:06:38
  * @LastEditors: voanit
- * @LastEditTime: 2020-10-04 16:05:43
+ * @LastEditTime: 2020-10-06 16:53:00
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -13,7 +13,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TicTacToe</title>
   <style>
-    .bread-item{
+    .checkerboard-item{
       width: 100px;
       height: 100px;
       border: 1px solid #fff;
@@ -28,7 +28,7 @@
   </style>
 </head>
 <body>
-  <div id="bread"></div>
+  <div id="checkerboard"></div>
 </body>
 </html>
 
@@ -46,17 +46,17 @@ let whoCheck = 2
 
 function show() {
   // 预先画出棋盘
-  let bread = document.getElementById('bread')
-  bread.innerHTML = ''
+  let checkerboard = document.getElementById('checkerboard')
+  checkerboard.innerHTML = ''
   for(let i = 0; i < 3; i++) {
     for(let j = 0; j < 3; j++){
       let item = document.createElement('div')
-      item.classList.add('bread-item')
+      item.classList.add('checkerboard-item')
       item.innerHTML = stateList[i*3+j] === 1 ? '⭕️' : stateList[i*3+j] === 2 ? '❌' : ''
-      bread.appendChild(item)
+      checkerboard.appendChild(item)
       item.addEventListener('click', ()=>handelClick(i,j), false)
     }
-    bread.appendChild(document.createElement('br'))
+    checkerboard.appendChild(document.createElement('br'))
   }
 }
 // click回调
