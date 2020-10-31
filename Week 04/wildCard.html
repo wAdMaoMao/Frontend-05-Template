@@ -1,0 +1,75 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: voanit
+ * @Date: 2020-10-31 11:46:50
+ * @LastEditors: voanit
+ * @LastEditTime: 2020-10-31 15:38:14
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WildCard</title>
+</head>
+<body>
+  
+</body>
+</html>
+<script type="text/javascript">
+
+function find(source,pattern) {
+  // 首先遍历找到 * 的数量
+  let startNum = 0
+  for(let i = 0; i < pattern.length; i++) {
+    if(pattern[i] === '*')
+    startNum ++
+  }
+  // 判断边缘情况 当pattern串中没有 * 时
+  if(startNum === 0) {
+    for(let i = 0;i<pattern.length;i++){
+      if(pattern[i]!==source[i] && pattern[i] !== '?'){
+        return false
+      }
+    }
+    return true
+  }
+
+  let lastIndex = 0 // 记录source角标
+  let count = 0 // 记录pattern角标
+
+  // 处理pattern头部 即第一个 * 之前的子串
+  for(count = 0; pattern[count] !== '*'; count++){
+    if(pattern[count] !== source[count] && pattern[count] !== '?') {
+      return false
+    }
+  }
+
+  lastIndex = count
+
+  // 处理pattern串中有 * 的情况 最后一个*不处理
+  for(let i = 0; i < startNum - 1; i++) {
+    count++
+    let retStr = ''
+    while (pattern[count] !== '*') {
+      retStr += pattern[count]
+      count++
+    }
+    // 将pattern串中的 ？ 替换成任意字符
+    let reg = new RegExp(retStr.replace(/\?/g,'[\\s\\S]'),'g')
+    reg.lastIndex = lastIndex
+    if(!reg.exec(source)) return false
+    lastIndex = reg.lastIndex
+  }
+
+  // 处理最后一个 * 及后边的字符匹配
+  for(let i = 0; i <= source.length - lastIndex && pattern[pattern.length - i - 1] !== '*';i++) {
+    if(pattern[pattern.length - i - 1] !== source[source.length - i - 1] && pattern[pattern.length - i - 1] !== '?'){
+      return false
+    }
+  }
+  return true
+}
+
+</script>

@@ -1,0 +1,68 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: voanit
+ * @Date: 2020-10-26 22:31:40
+ * @LastEditors: voanit
+ * @LastEditTime: 2020-10-26 22:53:13
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dictionary Tree</title>
+</head>
+<body>
+  
+</body>
+</html>
+<script type="text/javascript">
+
+  let $ = Symbol('$')
+
+  class Trie{
+    constructor(){
+      this.root = Object.create(null)
+    }
+    // 插入字符串
+    insertWord(word){
+      let node = this.root
+      for(let item of word){
+        if(!node[item]) node[item] = Object.create(null)
+        node = node[item]
+      }
+      if(!node[$]) node[$] = 0
+      node[$]++
+    }
+    // 找到出现次数最多的字符串
+    findMostWord(){
+      let max = 0
+      let maxWord = null
+      let find = (node, word) => {
+        if(node[$] && node[$] > max){
+          max = node[$]
+          maxWord = word
+        }
+        for(let p in node){
+          find(node[p],word + p)
+        }
+      }
+      find(this.root,'')
+      console.log('===maxWord===', maxWord, max)
+    }
+  }
+  // 产生 length 位随机 a-z 字符串
+  function randomWord(length) {
+    let ret = ''
+    for(let i = 0;i < length;i++) {
+      ret += String.fromCharCode(Math.random()*26 + 'a'.charCodeAt(0))
+    }
+    return ret
+  }
+
+  let ret = new Trie()
+  for(let i = 0;i < 100000; i++){
+    ret.insertWord(randomWord(4))
+  }
+</script>
