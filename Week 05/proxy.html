@@ -1,0 +1,97 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: voanit
+ * @Date: 2020-11-07 15:04:54
+ * @LastEditors: voanit
+ * @LastEditTime: 2020-11-07 16:42:41
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proxy</title>
+</head>
+<body>
+  <div>
+    <p>调色盘</p>
+    <input id="r" type="range" min="0" max="255">
+    <input id="g" type="range" min="0" max="255">
+    <input id="b" type="range" min="0" max="255">
+    <div id="show" style="width: 100px;height: 100px;"></div>
+  </div>
+</body>
+</html>
+<script type="text/javascript">
+
+  let callbacks = new Map()
+  let useReactivies = []
+  let reactivies = new Map()
+
+  let object = {
+    r: '0',
+    g: '0',
+    b: '0'
+  }
+
+  function effect(callback) {
+    useReactivies = []
+    callback()
+    console.log(useReactivies)
+    for(let reactivity of useReactivies) {
+      if(!callbacks.has(reactivity[0])){
+        callbacks.set(reactivity[0],new Map())
+      }
+      if(callbacks.get(reactivity[0]) && !callbacks.get(reactivity[0]).has(reactivity[1])) {
+        callbacks.get(reactivity[0]).set(reactivity[1],[])
+      }
+      callbacks.get(reactivity[0]).get(reactivity[1]).push(callback)
+    }
+  }
+
+  function reactive(obj) {
+    if(reactivies.has(obj)) return reactivies.get(obj)
+    let proxy = new Proxy(obj,{
+      set(obj,prop,value) {
+        obj[prop] = value
+        if(callbacks.get(obj) && callbacks.get(obj).get(prop)) {
+          for(let item of callbacks.get(obj).get(prop)){
+            item()
+          }
+        }
+        return obj[prop]
+      },
+      get(obj,prop) {
+        useReactivies.push([obj,prop])
+        if(typeof obj[prop] === 'object') return reactive(obj[prop])
+        return obj[prop]
+      }
+    })
+    reactivies.set(obj,proxy)
+    return proxy
+  }
+
+  let po = reactive(object)
+  effect(()=>{
+    document.getElementById('r').value = po.r
+  })
+  effect(()=>{
+    document.getElementById('g').value = po.g
+  })
+  effect(()=>{
+    document.getElementById('b').value = po.b
+  })
+  effect(()=>{
+    document.getElementById('show').style.backgroundColor = `rgb(${po.r},${po.g},${po.b})`
+  })
+  document.getElementById('r').addEventListener('input', event=>{
+    po.r = event.target.value
+  })
+  document.getElementById('g').addEventListener('input', event=>{
+    po.g = event.target.value
+  })
+  document.getElementById('b').addEventListener('input', event=>{
+    po.b = event.target.value
+  })
+</script>
