@@ -1,0 +1,184 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: voanit
+ * @Date: 2020-11-22 17:41:43
+ * @LastEditors: voanit
+ * @LastEditTime: 2020-11-22 18:35:39
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g6-3.1.0/build/g6.js"></script>
+  <title>Realm</title>
+  <style>
+    #Realm{
+      width: 100vw;
+      height: 100vh;
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="Realm"></div>
+</body>
+</html>
+<script type="text/javascript">
+  // 找到所有的realm属性
+  const getAllRealm = () => {
+    const set = new Set()
+    const map = new Map()
+    const list = [
+      'eval',
+      'isFinite',
+      'isNaN',
+      'parseInt',
+      'parseFloat',
+      'decodeURI',
+      'decodeURIComponent',
+      'encodeURI',
+      'encodeURIComponent',
+      'Array',
+      'Date',
+      'RegExp',
+      'Promise',
+      'Proxy',
+      'Map',
+      'WeakMap',
+      'Set',
+      'WeakSet',
+      'Function',
+      'Boolean',
+      'String',
+      'Number',
+      'Symbol',
+      'Object',
+      'Error',
+      'EvalError',
+      'RangeError',
+      'SyntaxError',
+      'TypeError',
+      'URIError',
+      'ArrayBuffer',
+      'SharedArrayError',
+      'DataView',
+      'Float32Array',
+      'Float64Array',
+      'Int8Array',
+      'Int16Array',
+      'Int32Array',
+      'Uint8Array',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8ClampedArray',
+      'Atomics',
+      'JSON',
+      'Math',
+      'Reflect'
+    ]
+    list.forEach(item => {
+      map.set(item, window[item])
+    })
+    const realm = {
+      id:'realm',
+      children:list.map(item => ({
+        id:item,
+        children:[]
+      }))
+    }
+    const queue = [...realm.children]
+    while (queue.length > 0) {
+      const child = queue.shift()
+      const id = child.id
+      const object = map.get(id)
+      if(set.has(object)) continue
+      if(object){
+        set.add(object)
+        for(const item of Object.getOwnPropertyNames(object)){
+          const con = Object.getOwnPropertyDescriptor(object,item)
+          const pushChild = (type = 'value') => {
+            const uid = type === 'value' ? `${id}.${item}` : `${id}.${item}.[${type}]`
+            const o = {
+              id:uid,
+              children:[]
+            }
+            map.set(uid,con[type])
+            child.children.push(o)
+            queue.push(o)
+          }
+          if((con.value !== null && typeof con.value === 'object') || typeof con.value === 'function'){
+            pushChild()
+          }
+          if(con.get){
+            pushChild('get')
+          }
+          if(con.set){
+            pushChild('set')
+          }
+        }
+      }
+    }
+    return realm
+  }
+  const render = (data) => {
+    const container = document.getElementById('Realm')
+    const width = container.scrollWidth
+    const height = container.scrollHeight || 500
+    const graph = new G6.TreeGraph({
+      container:'Realm',
+      width,
+      height,
+      modes:{
+        default:[
+          {
+            type:'collapse-expand',
+            onChange:(item,collapse)=>{
+              const data = item.get('model').data
+              data.collapse = collapse
+              return true
+            }
+          },
+          'drag-canvas',
+          'zoom-canvas'
+        ]
+      },
+      defaultNode:{
+        size:26,
+        anchorPoints:[
+          [0,0.5],
+          [1,0.5]
+        ],
+        style:{
+          fill:'#c6e5ff',
+          stroke:'#5b8ff9'
+        }
+      },
+      defaultEdge:{
+        type:'cubic-horizontal',
+        style:{
+          stroke:'#a3b1bf'
+        }
+      },
+      layout:{
+        type:'dendrogram',
+        direction:'LR',
+        nodeSep:30,
+        rankSep:100
+      }
+    })
+    graph.node((node)=>({
+      label:node.id,
+      labelCfg:{
+        position:node.children && node.children.length>0?'left':'right',
+        offset:5
+      }
+    }))
+    graph.data(data)
+    graph.render()
+    graph.fitView()
+  }
+
+  render(getAllRealm())
+</script>
