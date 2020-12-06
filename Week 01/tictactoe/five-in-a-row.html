@@ -1,0 +1,241 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: voanit
+ * @Date: 2020-10-06 16:49:36
+ * @LastEditors: voanit
+ * @LastEditTime: 2020-10-07 16:53:55
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>five-in-a-row</title>
+  <style>
+    .checkerboard-item{
+      width: 50px;
+      height: 50px;
+      border: 1px solid #fff;
+      background: rgb(68, 255, 208);
+      text-align: center;
+      display: inline-block;
+      vertical-align: middle;
+      cursor: pointer;
+      line-height: 50px;
+      /* font-size: 25px; */
+    }
+  </style>
+</head>
+<body>
+  <div id="checkerboard"></div>
+</body>
+</html>
+<script type="text/javascript" charset="utf-8">
+
+  // 定义一个二维数组代表棋盘内落位状态 0-空 1-⭕️ 2-❌
+  // let stateList = [
+  //   0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  // ]
+  let stateList = []
+  for(let i =0;i<226;i++){
+    stateList.push(1)
+  }
+  
+  //全局变量记录棋手
+  let whoCheck = 2
+  
+  function show() {
+    // 预先画出棋盘
+    let checkerboard = document.getElementById('checkerboard')
+    checkerboard.innerHTML = ''
+    let count = 0
+    for(let i = 0; i < 15; i++) {
+      for(let j = 0; j < 15; j++){
+        let item = document.createElement('div')
+        item.classList.add('checkerboard-item')
+        item.innerHTML = stateList[i*15+j] === 1 ? '⭕️'+count : stateList[i*15+j] === 2 ? '❌'+count : ''
+        checkerboard.appendChild(item)
+        item.addEventListener('click', ()=>handelClick(i,j), false)
+        count+=1
+      }
+      checkerboard.appendChild(document.createElement('br'))
+    }
+  }
+  // click回调
+  function handelClick(i,j) {
+    if(stateList[i*15+j] === 0){
+      stateList[i*15+j] = whoCheck
+      console.log('judgeWin(stateList,whoCheck)',judgeWin(stateList,whoCheck))
+      if(judgeWin(stateList,whoCheck)){
+        whoCheck === 1 ? console.log('⭕️is winner!') : console.log('❌ is winner!') 
+      }
+      whoCheck = 3 - whoCheck
+      show()
+      // 预判获胜者
+      // if(willWin(stateList,whoCheck)){
+      //   whoCheck === 1 ? console.log('⭕️ will win!') : console.log('❌ will win!') 
+      // }
+      // computerCheck()
+    }
+  }
+  // 自动下棋功能
+  function computerCheck() {
+    let choice = bestChoice(stateList,whoCheck)
+    if(choice && choice.result >= 0 && choice.point){
+      stateList[choice.point[1]*15+choice.point[0]] = whoCheck
+      if(judgeWin(stateList,whoCheck)){
+        whoCheck === 1 ? console.log('⭕️is winner!') : console.log('❌ is winner!') 
+      }
+      whoCheck = 3 - whoCheck
+      show()
+      // 预判获胜者
+      if(willWin(stateList,whoCheck)){
+        whoCheck === 1 ? console.log('⭕️ will win!') : console.log('❌ will win!') 
+      }
+    }
+  }
+  //暴力深拷贝
+  function cloneDeep(data) {
+    return Object.create(data)
+  }
+  // 判断输赢
+  function judgeWin(stateList,whoCheck) {
+    // 横行赢
+    let num = 0 //记录连子数量
+    abscissa:for(let i = 0; i < 15; i++){
+      for(let j = 0; j < 15; j++) {
+         if(stateList[i*15+j] !== whoCheck) {
+          num = 0
+         } else {
+          num +=1
+           if(num === 5) break abscissa
+         }
+      }
+    }
+    if(num===5) return true
+    // 纵行赢
+    ordinate:for(let i = 0; i < 15; i++) {
+      for(let j = 0; j < 15; j++) {
+        if(stateList[j*15+i] !== whoCheck) {
+          num = 0
+         } else {
+           num +=1
+           if(num === 5) break ordinate
+         }
+      }
+    }
+    if(num===5) return true
+    // 对角赢
+    {
+      let num = 0 //记录连子数量
+      let judgeList = []
+      for(let i = 4; i< 25; i++) {
+        judgeList.push(0)
+      }
+      bias1:for(let i = 5; i< 16; i++) {
+        for(let j = 0; j < i; j++){
+          if(stateList[14*j+i-1] !== whoCheck) {
+            judgeList[i-5] = 0
+          } else {
+            judgeList[i-5] += 1
+            if(judgeList[i-5] === 5) break bias1
+          }
+        }
+      }
+      let count = 0
+      bias2:for(let i = 16; i< 27; i++) {
+        for(let j = 0; j < (i-2*count-2); j++){
+          if(stateList[14*j+i-1] !== whoCheck) {
+            judgeList[i-5] = 0
+          } else {
+            judgeList[i-5] += 1
+            if(judgeList[i-5] === 5) break bias2
+          }
+        }
+        count += 1
+      }
+      console.log(judgeList)
+      if(judgeList.includes(5)) return true
+    }
+    // 对角赢
+    {
+      let num = 0 //记录连子数量
+      let judgeList = []
+      for(let i = 4; i< 25; i++) {
+        judgeList.push(0)
+      }
+      bias:for(let i = 0; i< 15; i++) {
+        if(stateList[14*i+14] !== whoCheck) {
+          num = 0
+         } else {
+           num +=1
+           if(num === 5) break bias
+         }
+      }
+      if(num === 5) return true
+    }
+    return false
+  }
+  
+  // 预判获胜者
+  function willWin(stateList,whoCheck) {
+    for(let i = 0; i < 3; i++){
+      for(let j = 0; j < 3; j++){
+         if(stateList[i*3+j]) continue
+         let copyList = cloneDeep(stateList)
+          copyList[i*3+j] = whoCheck
+          if(judgeWin(copyList,whoCheck)) return [j,i]
+      }
+    }
+    return null
+  }
+  
+  // 递归寻求最优落点
+  function bestChoice(stateList,whoCheck) {
+    let point
+    if(point = willWin(stateList,whoCheck)){
+      return {
+        point,
+        result: 1
+      }
+    }
+    let result = -2
+    outer:for(let i = 0; i < 3; i++) {
+      for(let j = 0; j < 3; j++){
+        if(stateList[i*3+j]) continue
+        let copyList = cloneDeep(stateList)
+        copyList[i*3+j] = whoCheck
+        let ret = bestChoice(copyList, 3 - whoCheck).result
+        if(-ret > result){
+          result = -ret
+          point = [j,i]
+        }
+        if(result === 1){
+          break outer
+        }
+      }
+    }
+    return {
+      point,
+      result: point ? result : 0
+    }
+  }
+  // console.log(bestChoice(stateList,whoCheck))
+  show()
+  
+  </script>
